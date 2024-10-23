@@ -677,3 +677,77 @@ func (f Float2D) AsImage(bits int, metadata string, rescale bool) ImageProxy {
 	ip.AddMetadata(metadata)
 	return ip
 }
+
+func (floatIn Float2D) GaussianDownsample() Float2D {
+
+	H := len(floatIn)
+	W := len(floatIn[0])
+	log.Println(W, H)
+	var floatOut, tempRows Float2D
+	floatOut = make([][]float64, H/2)
+	for j := 0; j < H/2; j++ {
+		floatOut[j] = make([]float64, W/2)
+	}
+	tempRows = make([][]float64, H)
+	// tempCols := make([][]float64, W/2)
+
+	for j := 0; j < H; j++ {
+		tempRows[j] = make([]float64, W/2)
+	}
+
+	// horizontal downsample
+	for j := 0; j < H; j++ {
+		tempRows[j] = downsample(floatIn[j])
+	}
+
+	// vertical downsample
+	for i := 0; i < W/2; i++ {
+		tempcol := make([]float64, H)
+		for j := 0; j < H; j++ {
+			tempcol[j] = tempRows[j][i]
+		}
+		halfcol := downsample(tempcol)
+
+		for j := 0; j < H/2; j++ {
+			floatOut[j][i] = halfcol[j]
+		}
+	}
+
+	return floatOut
+
+}
+
+// extract a rectangle w x h offset from the centre by x,y
+func (f Float2D) Middle(w, h, x, y int) Float2D {
+	g := make([][]float64, h)
+	dx := x - w/2
+	dy := y - h/2
+	for j := 0; j < h; j++ {
+		for i := 0; i < w; i++ {
+			g[j][i] = f[dx+j][dy+i]
+		}
+	}
+	return g
+}
+
+var gausscoeffs []float64 = []float64{0.029, 0.235, 0.471, 0.235, 0.029}
+
+func downsample(f []float64) []float64 {
+	N := len(f)
+	g := make([]float64, N)
+	g[0] = f[0]
+	g[1] = f[1]
+	g[N-1] = f[N-1]
+	g[N-2] = f[N-2]
+	h := make([]float64, N/2)
+	for i := 2; i < N-2; i++ {
+		for j := -2; j < 3; j++ {
+			g[i] += f[i+j] * gausscoeffs[j+2]
+		}
+	}
+
+	for i := 0; i < N/2; i++ {
+		h[i] = g[2*i]
+	}
+	return h
+}
