@@ -567,7 +567,7 @@ func (fp *Float2D) WeightLuminance(radius int) *Float2D {
 					meanvalue += f[j+k][i+l]
 				}
 			}
-			meanvalue /= float64(radius * radius)
+			meanvalue /= float64(N*N)
 			temp = math.Abs(meanvalue-high/2) / high * 2
 			temp *= temp
 			temp = math.Exp(-temp * 12.5)
@@ -712,9 +712,7 @@ func (floatIn Float2D) GaussianDownsample() Float2D {
 			floatOut[j][i] = halfcol[j]
 		}
 	}
-
 	return floatOut
-
 }
 
 // extract a rectangle w x h offset from the centre by x,y
