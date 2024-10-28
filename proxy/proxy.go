@@ -333,7 +333,7 @@ func (ip *ImageProxy) LoadFromFloatsAsRGBAComponents(RGBA []Float2D, nbits int, 
 // returns the requested RGBA component as a Float2D array
 //
 //	c - component, either R,G,B or A (of type Component, an iota)
-func (ip ImageProxy) GetComponentAsFloat(c Component) *Float2D {
+func (ip ImageProxy) GetComponentAsFloat2(c Component) *Float2D {
 	w := ip.Bounds().Dx()
 	h := ip.Bounds().Dy()
 	var r, g, b, a uint32
@@ -374,6 +374,41 @@ func (ip ImageProxy) GetComponentAsFloat(c Component) *Float2D {
 			}
 		}
 	}
+	return &floatOut
+}
+
+// returns the requested RGBA component as a Float2D array
+//
+//	c - component, either R,G,B or A (of type Component, an iota)
+func (ip ImageProxy) GetComponentAsFloat(c Component) *Float2D {
+	w := ip.Bounds().Dx()
+	h := ip.Bounds().Dy()
+	var r, g, b, a uint32
+	log.Println(w, h, c)
+
+	floatOut := Float2D(make([][]float64, h))
+
+	for j := 0; j < h; j++ {
+		floatOut[j] = make([]float64, w)
+	}
+
+	for j := 0; j < h; j++ {
+		for i := 0; i < w; i++ {
+			r, g, b, a = ip.At(i, j).RGBA()
+			switch c {
+			case R:
+				floatOut[j][i] = float64(r)
+			case G:
+				floatOut[j][i] = float64(g)
+			case B:
+				floatOut[j][i] = float64(b)
+			case A:
+				floatOut[j][i] = float64(a)
+			}
+		}
+	}
+
+
 	return &floatOut
 }
 
