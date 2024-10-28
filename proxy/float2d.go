@@ -152,7 +152,7 @@ func (floatIn Float2D) Shift() Float2D {
 // calculates the mean and subtracts from all values
 //
 // returns detrended data, as well as the mean value
-func (f Float2D) RemoveMean() (Float2D,float64) {
+func (f Float2D) RemoveMean() (Float2D, float64) {
 	mean := 0.0
 	n := float64(len(f) * len(f[0]))
 	for j := 0; j < len(f); j++ {
@@ -168,7 +168,7 @@ func (f Float2D) RemoveMean() (Float2D,float64) {
 			out[j][i] = f[j][i] - mean
 		}
 	}
-	return out,mean
+	return out, mean
 }
 
 // gets the average value
@@ -447,7 +447,7 @@ func (f Float2D) TranslatePixel(dx, dy int) *Float2D {
 	return &out
 }
 
-// shifts an image by an integer number of pixels in x and y
+// shifts an image by a sub-integer number of pixels in x and y using a linear phase shift
 //
 //	dx,dy - shifts to apply
 func (f Float2D) TranslateSubpixel(dx, dy float64) Float2D {
@@ -569,7 +569,7 @@ func (fp *Float2D) WeightLuminance(radius int) *Float2D {
 					meanvalue += f[j+k][i+l]
 				}
 			}
-			meanvalue /= float64(N*N)
+			meanvalue /= float64(N * N)
 			temp = math.Abs(meanvalue-high/2) / high * 2
 			temp *= temp
 			temp = math.Exp(-temp * 12.5)
