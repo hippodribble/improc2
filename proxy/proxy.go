@@ -292,9 +292,9 @@ func (ip *ImageProxy) CreateFromRGB(RGB []Float2D, rescale bool) error {
 	pmax := 0.0
 	pmin := 255.0
 
-	px := make([]uint8, 4*len(RGB[0]))
 	w := len(RGB[0][0])
 	h := len(RGB[0])
+	px := make([]uint8, 4*w*h)
 	imout := image.NewNRGBA(image.Rect(0, 0, w, h))
 
 	if !rescale {
