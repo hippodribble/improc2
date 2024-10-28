@@ -1037,11 +1037,8 @@ func (ip ImageProxy) Rotate(angle float64) *ImageProxy {
 		imout := image.NewRGBA(image.Rect(0, 0, w, h))
 
 		imout.Pix = px
-		// for x := 0; x < w; x++ {
-		// 	for y := 0; y < h; y++ {
-		// 		imout.SetRGBA(x, y, color.RGBA{uint8(cs[3][y][x]), uint8(cs[3][y][x]), uint8(cs[3][y][x]), 255})
-		// 	}
-		// }
+
+		
 		prox := ImageProxy{Image: imout}
 		prox.metadata = ip.metadata
 		prox.AddMetadata(fmt.Sprintf("Rotated %.2f radians RGBA", angle))
