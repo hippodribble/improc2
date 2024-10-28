@@ -487,7 +487,7 @@ func (ip ImageProxy) GetComponentAsFloat(c Component) *Float2D {
 }
 
 // returns a single component of an image as a grayscale image, either 8 or 16 bits (automatic based on input image)
-func (ip *ImageProxy) GetComponent(c Component) *ImageProxy {
+func (ip *ImageProxy) GetComponentAsGrayImage(c Component) *ImageProxy {
 	w := ip.Bounds().Dx()
 	h := ip.Bounds().Dy()
 	var r, g, b, a uint32
