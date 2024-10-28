@@ -157,7 +157,6 @@ func (ip *ImageProxy) LoadFromFile(path string) error {
 	}
 	ip.Config = config
 
-
 	r.Seek(0, 0)
 
 	im, _, err := image.Decode(r)
@@ -166,7 +165,6 @@ func (ip *ImageProxy) LoadFromFile(path string) error {
 	}
 
 	ip.Image = im
-
 
 	// if ip.Type() == "YCbCr" {
 	// 	ip.Image=ip.YCbCrToRGBA()
@@ -987,10 +985,10 @@ func (ip ImageProxy) Rotate(angle float64) *ImageProxy {
 // modified rotator using existing Float2D functionality
 func (ip ImageProxy) Rotate2(angle float64) *ImageProxy {
 
-	newim:=imaging.Rotate(ip,angle*180/math.Pi,color.Transparent)
+	newim := imaging.Rotate(ip, angle*180/math.Pi, color.Transparent)
 
-	op:=new(ImageProxy)
-	op.Image=newim
+	op := new(ImageProxy)
+	op.Image = newim
 	op.AddMetadata(fmt.Sprintf("Gray Rotated by  %.2f radians", angle))
 	return op
 }
@@ -1015,6 +1013,7 @@ func (ip ImageProxy) TranslateSubpixel(x, y float64) *ImageProxy {
 		return &a
 
 	case *image.RGBA, *image.NRGBA:
+		log.Println("RGBA 32 Bit")
 		rotatedComponents := make([]Float2D, 4)
 		for c := range []int{0, 1, 2, 3} {
 			rotatedComponents[c] = ip.GetComponentAsFloat(Component(c)).TranslateSubpixel(x, y)
@@ -1027,6 +1026,7 @@ func (ip ImageProxy) TranslateSubpixel(x, y float64) *ImageProxy {
 		return &a
 
 	case *image.RGBA64, *image.NRGBA64:
+
 		rotatedComponents := make([]Float2D, 4)
 		for c := range []int{0, 1, 2, 3} {
 			rotatedComponents[c] = ip.GetComponentAsFloat(Component(c)).TranslateSubpixel(x, y)
@@ -1040,26 +1040,28 @@ func (ip ImageProxy) TranslateSubpixel(x, y float64) *ImageProxy {
 	}
 }
 
-func(ip *ImageProxy) MakePyramid(minsize int)([]*ImageProxy,error){
-	h:=ip.Bounds().Dx()
-	if ip.Bounds().Dy()<h{h=ip.Bounds().Dy()}
-	if h<minsize{
-		return nil,errors.New("image is already smaller than the required minimum")
+func (ip *ImageProxy) MakePyramid(minsize int) ([]*ImageProxy, error) {
+	h := ip.Bounds().Dx()
+	if ip.Bounds().Dy() < h {
+		h = ip.Bounds().Dy()
+	}
+	if h < minsize {
+		return nil, errors.New("image is already smaller than the required minimum")
 	}
 
 	var layers []*ImageProxy = []*ImageProxy{ip}
 
-	for h>minsize{
-		lastlayer:=layers[len(layers)-1]
+	for h > minsize {
+		lastlayer := layers[len(layers)-1]
 		layers = append(layers, lastlayer.halveImage())
-		h/=2
+		h /= 2
 	}
-	return layers,nil
+	return layers, nil
 }
-func (ip *ImageProxy) halveImage()*ImageProxy{
-	b:=ip.Bounds()
-	op:=new(ImageProxy)
-	op.Image=imaging.Resize(ip,b.Dx()/2,b.Dy()/2,imaging.Gaussian)
+func (ip *ImageProxy) halveImage() *ImageProxy {
+	b := ip.Bounds()
+	op := new(ImageProxy)
+	op.Image = imaging.Resize(ip, b.Dx()/2, b.Dy()/2, imaging.Gaussian)
 	op.AddMetadata("Gaussian resample + reduction")
 	return op
 }

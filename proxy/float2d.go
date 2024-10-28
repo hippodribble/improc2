@@ -150,7 +150,9 @@ func (floatIn Float2D) Shift() Float2D {
 }
 
 // calculates the mean and subtracts from all values
-func (f Float2D) RemoveMean() Float2D {
+//
+// returns detrended data, as well as the mean value
+func (f Float2D) RemoveMean() (Float2D,float64) {
 	mean := 0.0
 	n := float64(len(f) * len(f[0]))
 	for j := 0; j < len(f); j++ {
@@ -166,7 +168,7 @@ func (f Float2D) RemoveMean() Float2D {
 			out[j][i] = f[j][i] - mean
 		}
 	}
-	return out
+	return out,mean
 }
 
 // gets the average value
