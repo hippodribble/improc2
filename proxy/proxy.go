@@ -279,6 +279,80 @@ func (ip *ImageProxy) LoadFromFloats(floatIn Float2D, nbits int, rescale bool) e
 	return nil
 }
 
+// makes a 32 bit image from r,g,b components (alpha is 255)
+//
+// rescaling means that ALL components are rescaled with the same factor, to prevent coplour changes
+// no rescaling just tries to convert to 8-bit. Everything outside of 0-255 is truncated.
+func (ip *ImageProxy) CreateFromRGB(RGB []Float2D, rescale bool) error {
+
+	if len(RGB) < 3 {
+		return errors.New("need 3 planes in order to create an image")
+	}
+
+	pmax := 0.0
+	pmin := 255.0
+
+	px := make([]uint8, 4*len(RGB[0]))
+	w := len(RGB[0][0])
+	h := len(RGB[0])
+	imout := image.NewNRGBA(image.Rect(0, 0, w, h))
+
+	if !rescale {
+		for j := 0; j < len(RGB[0]); j++ {
+			for i := 0; i < w; i++ {
+				for k := 0; k < len(RGB); k++ {
+					if RGB[k][j][i] >= 0 && RGB[k][j][i] <= 255 {
+						px[4*(j*w+i)+k] = uint8(RGB[k][j][i])
+					}
+				}
+				px[4*(j*w+i)+3] = 255
+			}
+		}
+		imout.Pix = px
+		ip.Image = imout
+		return nil
+	}
+
+	for i := range RGB {
+		plane := RGB[i]
+		for j := range plane {
+			row := plane[j]
+			for k := range row {
+				if row[k] > pmax {
+					pmax = row[k]
+				}
+				if row[k] < pmin {
+					pmin = row[k]
+				}
+			}
+		}
+	}
+
+	var a, b float64
+	scope := pmax - pmin
+
+	for j := 0; j < len(RGB[0]); j++ {
+		for i := 0; i < w; i++ {
+			for k := 0; k < len(RGB); k++ {
+				a = RGB[k][j][i]
+				b = (a - pmin) / scope * 255
+				if b < 0 {
+					b = 0
+				}
+				if b > 255 {
+					b = 255
+				}
+				px[4*(j*w+i)+k] = uint8(b)
+			}
+			px[4*(j*w+i)+3] = 255
+		}
+	}
+	imout.Pix = px
+	ip.Image = imout
+	return nil
+
+}
+
 // generates an NRGBA or NRGBA64 image from the provided Float2D arrays. Data can be either clipped or rescaled
 func (ip *ImageProxy) LoadFromFloatsAsRGBAComponents(RGBA []Float2D, nbits int, rescale bool) error {
 	if len(RGBA) != 4 {
@@ -407,7 +481,6 @@ func (ip ImageProxy) GetComponentAsFloat(c Component) *Float2D {
 			}
 		}
 	}
-
 
 	return &floatOut
 }
