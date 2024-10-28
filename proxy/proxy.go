@@ -13,6 +13,7 @@ import (
 	"math"
 	"os"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/disintegration/imaging"
@@ -1038,7 +1039,6 @@ func (ip ImageProxy) Rotate(angle float64) *ImageProxy {
 
 		imout.Pix = px
 
-		
 		prox := ImageProxy{Image: imout}
 		prox.metadata = ip.metadata
 		prox.AddMetadata(fmt.Sprintf("Rotated %.2f radians RGBA", angle))
@@ -1119,12 +1119,18 @@ func (ip ImageProxy) TranslateSubpixel(x, y float64) *ImageProxy {
 		return &a
 
 	case *image.RGBA, *image.NRGBA:
-		ipout:=ImageProxy{}
+		ipout := ImageProxy{}
 		log.Println("RGBA 32 Bit")
 		rotatedComponents := make([]Float2D, 4)
-		for c := range []int{0, 1, 2, 3} {
-			rotatedComponents[c] = ip.GetComponentAsFloat(Component(c)).TranslateSubpixel(x, y)
+		wg := &sync.WaitGroup{}
+		wg.Add(3)
+		for c := range []int{0, 1, 2} {
+			go func(c int, wg *sync.WaitGroup) {
+				defer wg.Done()
+				rotatedComponents[c] = ip.GetComponentAsFloat(Component(c)).TranslateSubpixel(x, y)
+			}(c, wg)
 		}
+		wg.Wait()
 
 		ipout.CreateFromRGB(rotatedComponents[:3], true)
 
