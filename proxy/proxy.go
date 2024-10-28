@@ -1004,6 +1004,7 @@ func (ip ImageProxy) TranslateSubpixel(x, y float64) *ImageProxy {
 
 	switch im := ip.Image.(type) {
 	case *image.Gray:
+		log.Println("GRAY")
 		a := ListToGrid(im.Pix, w).AsFloat().TranslateSubpixel(x, y).AsImage(8, fmt.Sprintf("TX: %.2f,%.2f", x, y), false)
 		return &a
 
@@ -1020,7 +1021,7 @@ func (ip ImageProxy) TranslateSubpixel(x, y float64) *ImageProxy {
 		}
 		// all 4 components have been rotated - recombine as RGBA
 		a := ImageProxy{}
-		a.AddMetadata("translated")
+		a.AddMetadata("translated as RGBA 32-bit")
 		a.LoadFromFloatsAsRGBAComponents(rotatedComponents, 8, false)
 		fmt.Println(a.Bounds())
 		return &a
