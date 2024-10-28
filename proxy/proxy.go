@@ -1125,10 +1125,7 @@ func (ip ImageProxy) TranslateSubpixel(x, y float64) *ImageProxy {
 		for c := range []int{0, 1, 2, 3} {
 			rotatedComponents[c] = ip.GetComponentAsFloat(Component(c)).TranslateSubpixel(x, y)
 		}
-		// all 4 components have been rotated - recombine as RGBA
-		// a := ImageProxy{}
-		// a.AddMetadata("translated as RGBA 32-bit")
-		// a.LoadFromFloatsAsRGBAComponents(rotatedComponents, 8, false)
+
 		ipout.CreateFromRGB(rotatedComponents[:3], true)
 
 		// fmt.Println(a.Bounds())
