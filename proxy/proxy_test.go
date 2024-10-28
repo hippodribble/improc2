@@ -1,6 +1,5 @@
 package proxy
 
-
 import (
 	_ "image/jpeg"
 	"image/png"

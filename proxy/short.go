@@ -74,7 +74,8 @@ func (px Ushortarray[k]) AsFloat() Float2D {
 }
 
 func (sh Ushortarray[k]) Spectrum() Complex2D {
-	return Complex2D(fft.FFT2Real(sh.AsFloat().RemoveMean()))
+	f,_:=sh.AsFloat().RemoveMean()
+	return Complex2D(fft.FFT2Real(f))
 }
 
 // converts a 8-bit uint array to 16-bit uint array
