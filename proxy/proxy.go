@@ -18,6 +18,7 @@ import (
 
 	"github.com/disintegration/imaging"
 	"github.com/mjibson/go-dsp/fft"
+	"gonum.org/v1/gonum/mat"
 )
 
 type Component int
@@ -351,7 +352,6 @@ func (ip *ImageProxy) CreateFromRGB(RGB []Float2D, rescale bool) error {
 	imout.Pix = px
 	ip.Image = imout
 	return nil
-
 }
 
 // generates an NRGBA or NRGBA64 image from the provided Float2D arrays. Data can be either clipped or rescaled
@@ -580,22 +580,14 @@ func (ip *ImageProxy) YCbCrToRGBA() *image.RGBA {
 	im := ip.Image
 	if iy, ok := im.(*image.YCbCr); ok {
 		outim := image.NewRGBA(im.Bounds())
-		// 24 bit image
 
-		// Y:=iy.Y
-		// Cb:=iy.Cb
-		// Cr:=iy.Cr
-		// log.Printf("No of elements Y: %d Cb: %d Cr: %d\n",len(Y),len(Cb),len(Cr))
-		// var r, g, b, a uint32
 		for i := 0; i < ip.Bounds().Dx(); i++ {
 			for j := 0; j < ip.Bounds().Dy(); j++ {
 				c := iy.YCbCrAt(i, j)
 				outim.Set(i, j, c)
 			}
 		}
-		// op.Image = outim
-		// log.Println("Successful transform of colours!")
-		// log.Println(op.Type(),outim.ColorModel())
+
 		return outim
 	}
 
@@ -634,7 +626,6 @@ func (src *ImageProxy) Copy() *ImageProxy {
 	op.Config = image.Config{ColorModel: dst.ColorModel(), Width: dst.Bounds().Dx(), Height: dst.Bounds().Dy()}
 	op.AddMetadata("Copied as " + op.Type())
 	return op
-
 }
 
 // masks the outside of a maximal inscribed circle in the image
@@ -689,20 +680,29 @@ func (ip *ImageProxy) LuminanceAsFloat() *Float2D {
 }
 
 // converts luminance values in any colour space to a Float2D array
-func (ip *ImageProxy) LuminanceAsFloat2D() *Float2D {
+func (ip *ImageProxy) LuminanceAsFloat1D() *[]float64 {
 	var r, g, b uint32
-
-	m := *NewFloat2D(ip.Bounds().Dx(), ip.Bounds().Dy())
+	W := ip.Bounds().Dx()
+	H := ip.Bounds().Dy()
+	m := make([]float64, (W * H))
 	for j := 0; j < ip.Bounds().Dy(); j++ {
-		m[j] = make([]float64, ip.Bounds().Dx())
 		for i := 0; i < ip.Bounds().Dx(); i++ {
 			r, g, b, _ = ip.At(i, j).RGBA()
-			m[j][i] = float64(max(r, g, b))
+			m[j*W+i] = float64(max(r, g, b))
 		}
 	}
-	w, h := m.Bounds()
-	log.Println("luminance floats:", w, h)
 	return &m
+}
+
+func (ip *ImageProxy) LuminanceMatrix() *mat.Dense {
+	f := ip.LuminanceAsFloat1D()
+
+	W := ip.Bounds().Dx()
+	H := ip.Bounds().Dy()
+	lumatrix := mat.NewDense(H, W, *f)
+	r, c := lumatrix.Dims()
+	log.Println("When creating luminance matrix, image bounds are", ip.Bounds(), "and matrix dims are", r, c, "(should be opposite)")
+	return lumatrix
 }
 
 // returns the spectrum of the image's luminance values
@@ -1123,12 +1123,12 @@ func (ip ImageProxy) TranslateSubpixel(x, y float64) *ImageProxy {
 	switch im := ip.Image.(type) {
 	case *image.Gray:
 		log.Println("GRAY")
-		a := ListToGrid(im.Pix, w).AsFloat().TranslateSubpixel(x, y).AsImage(8, fmt.Sprintf("TX: %.2f,%.2f", x, y), false)
+		a := ListToGrid(im.Pix, w).AsFloat().TranslateSubpixelFrequencyDomain(x, y).AsImage(8, fmt.Sprintf("TX: %.2f,%.2f", x, y), false)
 		return &a
 
 	case *image.Gray16:
 		px := Short8As16(im.Pix)
-		a := ListToGrid(px, w).AsFloat().TranslateSubpixel(x, y).AsImage(8, fmt.Sprintf("TX: %.2f,%.2f", x, y), false)
+		a := ListToGrid(px, w).AsFloat().TranslateSubpixelFrequencyDomain(x, y).AsImage(8, fmt.Sprintf("TX: %.2f,%.2f", x, y), false)
 		return &a
 
 	case *image.RGBA, *image.NRGBA:
@@ -1140,7 +1140,7 @@ func (ip ImageProxy) TranslateSubpixel(x, y float64) *ImageProxy {
 		for c := range []int{0, 1, 2} {
 			go func(c int, wg *sync.WaitGroup) {
 				defer wg.Done()
-				rotatedComponents[c] = ip.GetComponentAsFloat(Component(c)).TranslateSubpixel(x, y)
+				rotatedComponents[c] = ip.GetComponentAsFloat(Component(c)).TranslateSubpixelFrequencyDomain(x, y)
 			}(c, wg)
 		}
 		wg.Wait()
@@ -1154,7 +1154,7 @@ func (ip ImageProxy) TranslateSubpixel(x, y float64) *ImageProxy {
 
 		rotatedComponents := make([]Float2D, 4)
 		for c := range []int{0, 1, 2, 3} {
-			rotatedComponents[c] = ip.GetComponentAsFloat(Component(c)).TranslateSubpixel(x, y)
+			rotatedComponents[c] = ip.GetComponentAsFloat(Component(c)).TranslateSubpixelFrequencyDomain(x, y)
 		}
 		// all 4 components have been rotated - recombine as RGBA
 		a := ImageProxy{}
@@ -1183,6 +1183,7 @@ func (ip *ImageProxy) MakePyramid(minsize int) ([]*ImageProxy, error) {
 	}
 	return layers, nil
 }
+
 func (ip *ImageProxy) halveImage() *ImageProxy {
 	b := ip.Bounds()
 	op := new(ImageProxy)

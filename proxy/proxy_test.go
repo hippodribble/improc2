@@ -2,8 +2,8 @@ package proxy
 
 import (
 	_ "image/jpeg"
+	
 	"image/png"
-	_ "image/png"
 	"log"
 	"math"
 	"os"

@@ -358,7 +358,7 @@ func (f Float2D) NormCrossPower(g Float2D) Complex2D {
 }
 
 // Linearly interpolates a value at a sub-grid size node position
-func (f Float2D) LinearInterpolate(X, Y float64) float64 {
+func (f Float2D) InterpolateBilinear(X, Y float64) float64 {
 	x0 := int(X)
 	x1 := x0 + 1
 	y0 := int(Y)
@@ -411,7 +411,7 @@ func (floatIn Float2D) Rotate(phi float64) *Float2D {
 			// only interpolate if the source point is inside the original image
 			if X > 0 && X < float64(w)-1 && Y > 0 && Y < float64(h)-1 {
 
-				A = floatIn.LinearInterpolate(X, Y)
+				A = floatIn.InterpolateBilinear(X, Y)
 
 				if A < 0 || A >= 256 {
 					outOfRangeCount++
@@ -450,9 +450,27 @@ func (f Float2D) TranslatePixel(dx, dy int) *Float2D {
 // shifts an image by a sub-integer number of pixels in x and y using a linear phase shift
 //
 //	dx,dy - shifts to apply
-func (f Float2D) TranslateSubpixel(dx, dy float64) Float2D {
+func (f Float2D) TranslateSubpixelFrequencyDomain(dx, dy float64) Float2D {
 	spec := Complex2D(fft.FFT2Real(f))
 	return spec.TranslateFD(dx, dy).IFFT().AsReal()
+}
+
+func (fp *Float2D) TranslateSubpixelSpaceDomainBilinear(dx, dy float64) Float2D {
+	f := *fp
+	h := len(f)
+	w := len(f[0])
+	g := *NewFloat2D(w, h)
+	var x, y float64
+	for j := 0; j < h; j++ {
+		for i := 0; i < w; i++ {
+			x = float64(i) - dx
+			y = float64(j) - dy
+			if x >= 0 && x <= float64(w)-1 && y >= 0 && y <= float64(h)-1 {
+				g[j][i] = f.InterpolateBilinear(x, y)
+			}
+		}
+	}
+	return g
 }
 
 // Aligns two images and report the relative shift by computing the shift from this image to the parameter image.
@@ -464,35 +482,35 @@ func (f Float2D) TranslateSubpixel(dx, dy float64) Float2D {
 //
 //   - The images MUST be equal in size or this will CRASH!
 //   - No more than 5 iterations are run, to prevent long run times
-func (basep *Float2D) Align(refp *Float2D, accuracy float64) (x, y float64, shifted Float2D, err error) {
-	base := *basep
-	slider := *refp
+func (refp *Float2D) Align(sliderp *Float2D, accuracy float64) (x, y float64, shifted Float2D, err error) {
+	ref := *refp
+	slider := *sliderp
 	badsize := false
-	if len(base) != len(slider) {
+	if len(ref) != len(slider) {
 		badsize = true
 	}
-	if len(base[0]) != len(slider[0]) {
+	if len(ref[0]) != len(slider[0]) {
 		badsize = true
 	}
 	if badsize {
 		return 0, 0, nil, errors.New("images are not the same size")
 	}
-	poc := base.NormCrossPower(slider)
+	poc := ref.NormCrossPower(slider)
 	dx, dy := poc.MaxPeakFromGaussianFit()
 	DX := dx
 	DY := dy
-	moved := slider.TranslateSubpixel(-DX, -DY)
+	moved := slider.TranslateSubpixelFrequencyDomain(-DX, -DY)
 	r := dx*dx + dy*dy
 	iterations := 0
 	for r > accuracy && iterations < 5 {
 		iterations++
-		poc = base.NormCrossPower(moved)
+		poc = ref.NormCrossPower(moved)
 		dx, dy := poc.MaxPeakFromGaussianFit()
 		r = dx*dx + dy*dy
 		DX += dx
 		DY += dy
 		log.Printf("update dx=%03.3f dy=%03.3f cf %03.3f r=%03.3f  DX=%03.3f DY=%03.3f block size %d x %d\n", dx, dy, accuracy, r, DX, DY, len(slider), len(slider[0]))
-		moved = slider.TranslateSubpixel(-DX, -DY)
+		moved = slider.TranslateSubpixelFrequencyDomain(-DX, -DY)
 	}
 	return DX, DY, moved, nil
 }
@@ -719,12 +737,22 @@ func (floatIn Float2D) GaussianDownsample() Float2D {
 
 // extract a rectangle w x h offset from the centre by x,y
 func (f Float2D) Middle(w, h, x, y int) Float2D {
+	H := len(f)
+	W := len(f[0])
 	g := make([][]float64, h)
-	dx := x - w/2
-	dy := y - h/2
+	dx := x - w/2 + W/2
+	dy := y - h/2 + H/2
+
 	for j := 0; j < h; j++ {
+
+		g[j] = make([]float64, w)
 		for i := 0; i < w; i++ {
-			g[j][i] = f[dx+j][dy+i]
+			defer func() {
+				if r := recover(); r != nil {
+					log.Println(w, h, W, H, x, y, i, j, dx, dy)
+				}
+			}()
+			g[j][i] = f[dy+j][dx+i]
 		}
 	}
 	return g

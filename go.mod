@@ -7,6 +7,7 @@ require (
 	github.com/disintegration/imaging v1.6.2
 	github.com/hippodribble/fynewidgets v0.6.0
 	github.com/mjibson/go-dsp v0.0.0-20180508042940-11479a337f12
+	gonum.org/v1/gonum v0.15.1
 )
 
 require (
