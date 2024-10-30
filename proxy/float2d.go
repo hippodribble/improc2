@@ -482,7 +482,7 @@ func (fp *Float2D) TranslateSubpixelSpaceDomainBilinear(dx, dy float64) Float2D 
 //
 //   - The images MUST be equal in size or this will CRASH!
 //   - No more than 5 iterations are run, to prevent long run times
-func (refp *Float2D) Align(sliderp *Float2D, accuracy float64) (x, y float64, shifted Float2D, err error) {
+func (refp *Float2D) Align(sliderp *Float2D, accuracy float64, maxiterations int) (x, y float64, shifted Float2D, err error) {
 	ref := *refp
 	slider := *sliderp
 	badsize := false
@@ -502,14 +502,14 @@ func (refp *Float2D) Align(sliderp *Float2D, accuracy float64) (x, y float64, sh
 	moved := slider.TranslateSubpixelFrequencyDomain(-DX, -DY)
 	r := dx*dx + dy*dy
 	iterations := 0
-	for r > accuracy && iterations < 10 {
+	for r > accuracy && iterations < maxiterations {
 		iterations++
 		poc = ref.NormCrossPower(moved)
 		dx, dy := poc.MaxPeakFromGaussianFit()
 		r = dx*dx + dy*dy
 		DX += dx
 		DY += dy
-		log.Printf("update dx=%03.3f dy=%03.3f cf %03.3f r=%03.3f  DX=%03.3f DY=%03.3f block size %d x %d\n", dx, dy, accuracy, r, DX, DY, len(slider), len(slider[0]))
+		log.Printf("update %d dx=%03.3f dy=%03.3f cf %03.3f r=%03.3f  DX=%03.3f DY=%03.3f block size %d x %d\n",iterations, dx, dy, accuracy, r, DX, DY, len(slider), len(slider[0]))
 		moved = slider.TranslateSubpixelFrequencyDomain(-DX, -DY)
 	}
 	return DX, DY, moved, nil
