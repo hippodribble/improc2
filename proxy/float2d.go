@@ -502,7 +502,7 @@ func (refp *Float2D) Align(sliderp *Float2D, accuracy float64) (x, y float64, sh
 	moved := slider.TranslateSubpixelFrequencyDomain(-DX, -DY)
 	r := dx*dx + dy*dy
 	iterations := 0
-	for r > accuracy && iterations < 5 {
+	for r > accuracy && iterations < 10 {
 		iterations++
 		poc = ref.NormCrossPower(moved)
 		dx, dy := poc.MaxPeakFromGaussianFit()
