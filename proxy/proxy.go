@@ -1140,7 +1140,7 @@ func (ip ImageProxy) TranslateSubpixel(x, y float64) *ImageProxy {
 		for c := range []int{0, 1, 2} {
 			go func(c int, wg *sync.WaitGroup) {
 				defer wg.Done()
-				rotatedComponents[c] = ip.GetComponentAsFloat(Component(c)).TranslateSubpixelFrequencyDomain(x, y)
+				rotatedComponents[c] = ip.GetComponentAsFloat(Component(c)).TranslateSubpixelSpaceDomainBilinear(x, y)
 			}(c, wg)
 		}
 		wg.Wait()
