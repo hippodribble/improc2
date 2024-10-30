@@ -672,10 +672,6 @@ func (ip *ImageProxy) Circularise() *ImageProxy {
 // converts luminance values in any colour space to a Float2D array
 func (ip *ImageProxy) LuminanceAsFloat() *Float2D {
 	var r, g, b uint32
-	// fd:=ip.Image
-	// convert pixels directly to luminance values as uint16
-
-	// fmt.Println(ip.AllMetadata())
 
 	m := Float2D(make([][]float64, ip.Bounds().Dy()))
 	for j := 0; j < ip.Bounds().Dy(); j++ {
@@ -689,6 +685,23 @@ func (ip *ImageProxy) LuminanceAsFloat() *Float2D {
 
 		}
 	}
+	return &m
+}
+
+// converts luminance values in any colour space to a Float2D array
+func (ip *ImageProxy) LuminanceAsFloat2D() *Float2D {
+	var r, g, b uint32
+
+	m := *NewFloat2D(ip.Bounds().Dx(), ip.Bounds().Dy())
+	for j := 0; j < ip.Bounds().Dy(); j++ {
+		m[j] = make([]float64, ip.Bounds().Dx())
+		for i := 0; i < ip.Bounds().Dx(); i++ {
+			r, g, b, _ = ip.At(i, j).RGBA()
+			m[j][i] = float64(max(r, g, b))
+		}
+	}
+	w, h := m.Bounds()
+	log.Println("luminance floats:", w, h)
 	return &m
 }
 
