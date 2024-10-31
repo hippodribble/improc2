@@ -22,6 +22,11 @@ const (
 // Float2D represents a monochrome image using floats.
 type Float2D [][]float64
 
+
+func(c Float2D)Dims()(rows,cols int){
+	return len(c),len(c[0])
+}
+
 // creates an empty (zero-valued image)
 func NewFloat2D(w, h int) *Float2D {
 	f := Float2D(make([][]float64, h))
