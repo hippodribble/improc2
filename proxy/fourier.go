@@ -149,3 +149,26 @@ func (c Complex2D) MaxPeakFromGaussianFit() (float64, float64) {
 	// ShowCurrentOperation("")
 	return gaussX + float64(X), gaussY + float64(Y)
 }
+
+// shifts the float image by half in x and y, to central DC in amplitude spectra etc.
+func (complexIn Complex2D) Shift() Complex2D {
+
+	w := len(complexIn[0])
+	h := len(complexIn)
+
+	var floatOut Complex2D = make([][]complex128, h)
+
+	for j := 0; j < h; j++ {
+		floatOut[j] = make([]complex128, w)
+	}
+
+	for j := 0; j < h; j++ {
+		for i := 0; i < w; i++ {
+			J := (j + h/2) % h
+			I := (i + w/2) % w
+			floatOut[J][I] = complexIn[j][i]
+		}
+	}
+	return floatOut
+
+}

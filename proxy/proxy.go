@@ -56,7 +56,7 @@ func (ip *ImageProxy) AddMetadata(data string) ImageProxy {
 	if ip.metadata == nil {
 		ip.metadata = make([]string, 0)
 	}
-	t := time.Now().Format("2006-02-01 15:04:05")
+	t := time.Now().Format("2006-01-02 15:04:05")
 	ip.metadata = append(ip.metadata, t+"  "+data)
 	return *ip
 }
@@ -700,8 +700,8 @@ func (ip *ImageProxy) LuminanceMatrix() *mat.Dense {
 	W := ip.Bounds().Dx()
 	H := ip.Bounds().Dy()
 	lumatrix := mat.NewDense(H, W, *f)
-	r, c := lumatrix.Dims()
-	log.Println("When creating luminance matrix, image bounds are", ip.Bounds(), "and matrix dims are", r, c, "(should be opposite)")
+	// r, c := lumatrix.Dims()
+	// log.Println("When creating luminance matrix, image bounds are", ip.Bounds(), "and matrix dims are", r, c, "(should be opposite)")
 	return lumatrix
 }
 
@@ -1116,7 +1116,7 @@ func (ip ImageProxy) Rotate2(angle float64) *ImageProxy {
 // Returned image is the same size as the original.
 //
 //	x,y - amount by which to shift, in pixels.
-func (ip ImageProxy) TranslateSubpixel(x, y float64) *ImageProxy {
+func (ip ImageProxy) TranslateSubpixel(x, y float64,) *ImageProxy {
 	// h := ip.Bounds().Dy()
 	w := ip.Bounds().Dx()
 
@@ -1147,7 +1147,6 @@ func (ip ImageProxy) TranslateSubpixel(x, y float64) *ImageProxy {
 
 		ipout.CreateFromRGB(rotatedComponents[:3], true)
 
-		// fmt.Println(a.Bounds())
 		return &ipout
 
 	case *image.RGBA64, *image.NRGBA64:
