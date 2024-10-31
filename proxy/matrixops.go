@@ -149,12 +149,12 @@ func RescaleMatrixTo256(matrix mat.Matrix) mat.Dense {
 	return *m
 }
 
-func (f *ImageMatrix) Convolve(kernel *mat.Dense) *mat.Dense {
+func (f *ImageMatrix) Convolve(B *mat.Dense) *mat.Dense {
 
 	var v float64
 
 	R, C := f.Dims()
-	r, _ := kernel.Dims()
+	r, _ := B.Dims()
 	radius := r / 2
 	g := mat.NewDense(R, C, nil)
 
