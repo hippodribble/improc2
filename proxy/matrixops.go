@@ -165,7 +165,7 @@ func RescaleMatrixTo256(matrix mat.Matrix) mat.Dense {
 	return *m
 }
 
-func (f *ImageMatrix) Convolve(B *mat.Dense) *mat.Dense {
+func (f *ImageMatrix) Convolve(B ImageMatrix) ImageMatrix {
 
 	var v float64
 
@@ -187,7 +187,7 @@ func (f *ImageMatrix) Convolve(B *mat.Dense) *mat.Dense {
 			g.Set(i, j, v)
 		}
 	}
-	return g
+	return NewImageMatrix(g)
 }
 
 func (A *ImageMatrix) ToFloat2D() Float2D {
