@@ -160,7 +160,7 @@ func RescaleMatrixTo256(matrix mat.Matrix) mat.Dense {
 	}
 
 	R, C := m.Dims()
-	log.Println("Rescale to 256", R, C, "vs", r, c)
+	// log.Println("Rescale to 256", R, C, "vs", r, c)
 
 	return *m
 }
@@ -212,9 +212,9 @@ func (A ImageMatrix) ConvolveFD(B ImageMatrix) (ImageMatrix, error) {
 	spA = spA.Shift()
 	spB = spB.Shift()
 	// enlarge smaller spectrum to size of larger
-	ra, ca := spA.Dims()
-	rb, cb := spB.Dims()
-	log.Println("A dims:", ra, ca, "B dims:", rb, cb)
+	// ra, ca := spA.Dims()
+	// rb, cb := spB.Dims()
+	// log.Println("A dims:", ra, ca, "B dims:", rb, cb)
 	// multiply complex spectra
 	prodspec, err := spA.MultiplyElements(spB)
 	if err != nil {
