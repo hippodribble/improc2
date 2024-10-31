@@ -241,7 +241,7 @@ func (g ImageMatrix) CalcRatio(f ImageMatrix) (ImageMatrix, error) {
 	return G, nil
 }
 
-func (m ImageMatrix) Flip() (ImageMatrix, error) {
+func (m ImageMatrix) Flip() ImageMatrix {
 	var M mat.Dense
 	r, c := M.Copy(m)
 	hr := r / 2
@@ -266,5 +266,5 @@ func (m ImageMatrix) Flip() (ImageMatrix, error) {
 		}
 	}
 
-	return NewImageMatrix(&M), nil
+	return NewImageMatrix(&M)
 }
