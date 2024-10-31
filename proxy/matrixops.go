@@ -253,5 +253,4 @@ func (m ImageMatrix)Flip() (ImageMatrix, error) {
 	}
 
 	return NewImageMatrix(&M), nil
-
 }
