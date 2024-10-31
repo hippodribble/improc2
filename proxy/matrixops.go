@@ -159,7 +159,7 @@ func RescaleMatrixTo256(matrix mat.Matrix) mat.Dense {
 		}
 	}
 
-	R, C := m.Dims()
+
 	// log.Println("Rescale to 256", R, C, "vs", r, c)
 
 	return *m
