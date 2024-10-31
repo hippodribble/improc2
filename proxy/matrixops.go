@@ -1,8 +1,10 @@
 package proxy
 
 import (
+	"errors"
 	"log"
 
+	"github.com/mjibson/go-dsp/fft"
 	"gonum.org/v1/gonum/mat"
 )
 
@@ -183,4 +185,73 @@ func (A *ImageMatrix) ToFloat2D() Float2D {
 		aA[i] = A.RawRowView(i)
 	}
 	return aA
+}
+
+func (A ImageMatrix) ConvolveFD(B ImageMatrix) (ImageMatrix, error) {
+	// convert dense matrix to Float2D
+	// and take spectra
+	var product ImageMatrix
+
+	var spA Complex2D = fft.FFT2Real(A.ToFloat2D())
+	var spB Complex2D = fft.FFT2Real(B.ToFloat2D())
+	// shift spectra
+	spA = spA.Shift()
+	spB = spB.Shift()
+	// enlarge smaller spectrum to size of larger
+	ra, ca := spA.Dims()
+	rb, cb := spB.Dims()
+	log.Println("A dims:", ra, ca, "B dims:", rb, cb)
+	// multiply complex spectra
+	prodspec, err := spA.MultiplyElements(spB)
+	if err != nil {
+		return product, errors.New("error cross-multiplying spectra")
+	}
+	p := prodspec.Shift().IFFT().AsReal().ToDenseMatrix()
+	return NewImageMatrix(&p), nil
+}
+
+func (g ImageMatrix)CalcRatio(f ImageMatrix) (ImageMatrix, error) {
+	eta := 1.0e-30
+	var G ImageMatrix
+	r, c := g.Dims()
+	R, C := f.Dims()
+	if r != R || c != C {
+		return G, errors.New("matrix dimensions do not match")
+	}
+	G = NewImageMatrix(mat.NewDense(r, c, nil))
+	for i := 0; i < r; i++ {
+		for j := 0; j < c; j++ {
+			G.Set(i, j, g.At(i, j)/(eta+f.At(i, j)))
+		}
+	}
+	return G, nil
+}
+
+func (m ImageMatrix)Flip() (ImageMatrix, error) {
+	var M mat.Dense
+	r, c := M.Copy(m)
+	hr := r / 2
+	hc := c / 2
+
+	var a, b float64
+
+	for i := 0; i < hr; i++ {
+		for j := 0; j < c; j++ {
+			a = M.At(r-1-i, j)
+			b = M.At(i, j)
+			M.Set(i, j, a)
+			M.Set(r-1-i, j, b)
+		}
+	}
+	for i := 0; i < r; i++ {
+		for j := 0; j < hc; j++ {
+			a = M.At(i, c-1-j)
+			b = M.At(i, j)
+			M.Set(i, j, a)
+			M.Set(i, c-1-j, b)
+		}
+	}
+
+	return NewImageMatrix(&M), nil
+
 }
