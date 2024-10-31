@@ -3,6 +3,7 @@ package proxy
 import (
 	"errors"
 	"log"
+	"math"
 
 	"github.com/mjibson/go-dsp/fft"
 	"gonum.org/v1/gonum/mat"
@@ -14,6 +15,19 @@ type ImageMatrix struct {
 
 func NewImageMatrix(m *mat.Dense) ImageMatrix {
 	return ImageMatrix{Dense: m}
+}
+
+func NewPSF(radius int, sigma float64) ImageMatrix {
+
+	psf := mat.NewDense(2*radius+1, 2*radius+1, nil)
+	for i := 0; i < radius; i++ {
+		for j := 0; j < radius; j++ {
+			a := math.Exp(-float64(i) * float64(i) / 2 / sigma / sigma)
+			psf.Set(i, j, a)
+		}
+	}
+	return NewImageMatrix(psf)
+
 }
 
 // shifts an image by an integer number of pixels in x and y
@@ -210,7 +224,7 @@ func (A ImageMatrix) ConvolveFD(B ImageMatrix) (ImageMatrix, error) {
 	return NewImageMatrix(&p), nil
 }
 
-func (g ImageMatrix)CalcRatio(f ImageMatrix) (ImageMatrix, error) {
+func (g ImageMatrix) CalcRatio(f ImageMatrix) (ImageMatrix, error) {
 	eta := 1.0e-30
 	var G ImageMatrix
 	r, c := g.Dims()
@@ -227,7 +241,7 @@ func (g ImageMatrix)CalcRatio(f ImageMatrix) (ImageMatrix, error) {
 	return G, nil
 }
 
-func (m ImageMatrix)Flip() (ImageMatrix, error) {
+func (m ImageMatrix) Flip() (ImageMatrix, error) {
 	var M mat.Dense
 	r, c := M.Copy(m)
 	hr := r / 2
