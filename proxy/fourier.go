@@ -6,6 +6,7 @@ import (
 	"math/cmplx"
 
 	"github.com/mjibson/go-dsp/fft"
+	"gonum.org/v1/gonum/mat"
 )
 
 // wrapper for a 2D complex array
@@ -127,7 +128,6 @@ func (c Complex2D) MaxArgs() (int, int) {
 	return xmax, ymax
 }
 
-
 // gets the subsample peak of a Complex2D
 func (c Complex2D) MaxPeakFromGaussianFit() (float64, float64) {
 	// spec := *specp
@@ -173,22 +173,32 @@ func (c Complex2D) Shift() Complex2D {
 	return cOut
 }
 
-func(c Complex2D)Dims()(rows,cols int){
-	return len(c),len(c[0])
+func (c Complex2D) Dims() (rows, cols int) {
+	return len(c), len(c[0])
 }
 
-func(c Complex2D)MultiplyElements(a Complex2D)(Complex2D,error){
-	R,C:=c.Dims()
-	R2,C2:=a.Dims()
-	if R!=R2 || C!=C2{
+func (c Complex2D) MultiplyElements(a Complex2D) (Complex2D, error) {
+	R, C := c.Dims()
+	R2, C2 := a.Dims()
+	if R != R2 || C != C2 {
 		return nil, errors.New("spectral dimensions do not match")
 	}
-	var out Complex2D=make([][]complex128,R)
-	for i:=0;i<R;i++{
-		out[i]=make([]complex128,C)
-		for j:=0;j<C;j++{
-			out[i][j]=c[i][j]*a[i][j]
+	var out Complex2D = make([][]complex128, R)
+	for i := 0; i < R; i++ {
+		out[i] = make([]complex128, C)
+		for j := 0; j < C; j++ {
+			out[i][j] = c[i][j] * a[i][j]
 		}
 	}
-	return out,nil
+	return out, nil
+}
+
+func (A Float2D) ToDenseMatrix() mat.Dense {
+
+	r, c := len(A), len(A[0])
+	m := mat.NewDense(r, c, nil)
+	for i := 0; i < r; i++ {
+		m.SetRow(i, A[i])
+	}
+	return *m
 }

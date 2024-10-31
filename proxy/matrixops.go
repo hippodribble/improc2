@@ -69,8 +69,8 @@ func (im ImageMatrix) InterpolateBilinear(row, col float64) float64 {
 func (imat ImageMatrix) TranslateSubpixelSpaceDomainBilinear(dc, dr float64) ImageMatrix {
 
 	r, c := imat.Dims()
-	g:=ImageMatrix{Dense: mat.NewDense(r, c, nil)}
-	
+	g := ImageMatrix{Dense: mat.NewDense(r, c, nil)}
+
 	var I, J float64
 	for j := 0; j < r; j++ {
 		for i := 0; i < c; i++ {
@@ -110,13 +110,6 @@ func (imat ImageMatrix) RowGradient() ImageMatrix {
 	return NewImageMatrix(d)
 }
 
-// Horizontal gradient at an interpolated point in a matrix
-//
-// This corresponds to a single row r, which can be fractional, ie between discrete rows
-// the gradient is returned across the specified fractional column
-//
-// There is no bounds checking, as this should be ensured before calling. This
-// helps to improve speed.
 func (imat *ImageMatrix) ColumnGradientAtPoint(r, c float64) float64 {
 	return (imat.InterpolateBilinear(r, c+1) - imat.InterpolateBilinear(r, c-1)) / 2
 }
@@ -124,7 +117,6 @@ func (imat *ImageMatrix) ColumnGradientAtPoint(r, c float64) float64 {
 func (imat *ImageMatrix) RowGradientAtPoint(r, c float64) float64 {
 	return (imat.InterpolateBilinear(r+1, c) - imat.InterpolateBilinear(r-1, c)) / 2
 }
-
 
 func RescaleMatrixTo256(matrix mat.Matrix) mat.Dense {
 
@@ -153,6 +145,42 @@ func RescaleMatrixTo256(matrix mat.Matrix) mat.Dense {
 
 	R, C := m.Dims()
 	log.Println("Rescale to 256", R, C, "vs", r, c)
-	
+
 	return *m
+}
+
+func (f *ImageMatrix) Convolve(kernel *mat.Dense) *mat.Dense {
+
+	var v float64
+
+	R, C := f.Dims()
+	r, _ := kernel.Dims()
+	radius := r / 2
+	g := mat.NewDense(R, C, nil)
+
+	for i := 0; i < R; i++ {
+		for j := 0; j < C; j++ {
+			v = 0
+			for k := -radius; k < radius+1; k++ {
+				for l := -radius; l < radius+1; l++ {
+					if i+k >= 0 && i+k < R && j+l >= 0 && j+l < C {
+						v += f.At(i+k, j+l)
+					}
+				}
+			}
+			g.Set(i, j, v)
+		}
+	}
+	return g
+}
+
+func (A *ImageMatrix) ToFloat2D() Float2D {
+
+	r, _ := A.Dims()
+
+	aA := make([][]float64, r)
+	for i := 0; i < r; i++ {
+		aA[i] = A.RawRowView(i)
+	}
+	return aA
 }
