@@ -1,6 +1,7 @@
 package proxy
 
 import (
+	"errors"
 	"math"
 	"math/cmplx"
 
@@ -174,4 +175,20 @@ func (c Complex2D) Shift() Complex2D {
 
 func(c Complex2D)Dims()(rows,cols int){
 	return len(c),len(c[0])
+}
+
+func(c Complex2D)MultiplyElements(a Complex2D)(Complex2D,error){
+	R,C:=c.Dims()
+	R2,C2:=a.Dims()
+	if R!=R2 || C!=C2{
+		return nil, errors.New("spectral dimensions do not match")
+	}
+	var out Complex2D=make([][]complex128,R)
+	for i:=0;i<R;i++{
+		out[i]=make([]complex128,C)
+		for j:=0;j<C;j++{
+			out[i][j]=c[i][j]*a[i][j]
+		}
+	}
+	return out,nil
 }

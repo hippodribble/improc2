@@ -22,9 +22,8 @@ const (
 // Float2D represents a monochrome image using floats.
 type Float2D [][]float64
 
-
-func(c Float2D)Dims()(rows,cols int){
-	return len(c),len(c[0])
+func (c Float2D) Dims() (rows, cols int) {
+	return len(c), len(c[0])
 }
 
 // creates an empty (zero-valued image)
@@ -514,7 +513,7 @@ func (refp *Float2D) Align(sliderp *Float2D, accuracy float64, maxiterations int
 		r = dx*dx + dy*dy
 		DX += dx
 		DY += dy
-		log.Printf("update %d dx=%03.3f dy=%03.3f cf %03.3f r=%03.3f  DX=%03.3f DY=%03.3f block size %d x %d\n",iterations, dx, dy, accuracy, r, DX, DY, len(slider), len(slider[0]))
+		log.Printf("update %d dx=%03.3f dy=%03.3f cf %03.3f r=%03.3f  DX=%03.3f DY=%03.3f block size %d x %d\n", iterations, dx, dy, accuracy, r, DX, DY, len(slider), len(slider[0]))
 		moved = slider.TranslateSubpixelFrequencyDomain(-DX, -DY)
 	}
 	return DX, DY, moved, nil
@@ -783,4 +782,20 @@ func downsample(f []float64) []float64 {
 		h[i] = g[2*i]
 	}
 	return h
+}
+
+func (c Float2D) MultiplyElements(a Float2D) (Float2D, error) {
+	R, C := c.Dims()
+	R2, C2 := a.Dims()
+	if R != R2 || C != C2 {
+		return nil, errors.New("spectral dimensions do not match")
+	}
+	var out Float2D = make([][]float64, R)
+	for i := 0; i < R; i++ {
+		out[i] = make([]float64, C)
+		for j := 0; j < C; j++ {
+			out[i][j] = c[i][j] * a[i][j]
+		}
+	}
+	return out, nil
 }
