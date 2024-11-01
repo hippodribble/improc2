@@ -330,6 +330,23 @@ func (m *ImageMatrix) Pad(T, B, L, R int) *ImageMatrix {
 	return &M
 }
 
+func (m *ImageMatrix) Trim(T, B, L, R int) *ImageMatrix {
+	r, c := m.Dims()
+	w := c - L - R
+	h := r - T - B
+	M := NewImageMatrix(mat.NewDense(h, w, nil))
+	for i := 0; i < h; i++ {
+		for j := 0; j < w; j++ {
+			M.Set(i, j, m.At(i+T, j+L))
+		}
+	}
+	return &M
+}
+
+func (m *ImageMatrix) TrimAll(n int) *ImageMatrix {
+	return m.Trim(n,n,n,n)
+}
+
 func (m *ImageMatrix) PadReflect(n int) *ImageMatrix {
 
 	r, c := m.Dims()
