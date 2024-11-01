@@ -20,10 +20,10 @@ func NewImageMatrix(m *mat.Dense) ImageMatrix {
 func NewPSF(radius int, sigma float64) ImageMatrix {
 
 	psf := mat.NewDense(2*radius+1, 2*radius+1, nil)
-	for i := 0; i < radius; i++ {
-		for j := 0; j < radius; j++ {
+	for i := -radius; i < radius; i++ {
+		for j := -radius; j < radius; j++ {
 			a := math.Exp(-float64(i) * float64(i) / 2 / sigma / sigma)
-			psf.Set(i, j, a)
+			psf.Set(i+radius, j+radius, a)
 		}
 	}
 	return NewImageMatrix(psf)
