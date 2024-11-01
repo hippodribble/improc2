@@ -10,7 +10,7 @@ import (
 func TestDeterminant(t *testing.T) {
 
 	m := NewImageMatrix(mat.NewDense(2, 2, []float64{1, 2, 3, 4}))
-	detM := m.Determinant()
+	detM := mat.Det(m)
 	log.Println(detM)
 
 }
