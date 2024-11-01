@@ -338,13 +338,13 @@ func (m *ImageMatrix) PadReflect(n int) *ImageMatrix {
 	for i := 0; i < n; i++ {
 
 		for col := 0; col < c; col++ {
-			M.Set(i, col, M.At(n*2-1-i, col))
-			M.Set(n+i, col, M.At(r-i-1, col))
+			M.Set(i, col+n, M.At(n*2-1-i, col))
+			M.Set(r+i, col+n, M.At(r-i-1, col))
 		}
 
 		for row := 0; row < r; row++ {
-			M.Set(row, i, M.At(row, n*2-1-i))
-			M.Set(row, n+i, M.At(row, c-i-1))
+			M.Set(row+n, i, M.At(row, n*2-1-i))
+			M.Set(row+n, c+i, M.At(row, c-i-1))
 		}
 
 	}
