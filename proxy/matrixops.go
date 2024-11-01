@@ -241,8 +241,9 @@ func (g ImageMatrix) CalcRatio(f ImageMatrix) (ImageMatrix, error) {
 }
 
 func (m ImageMatrix) Flip() ImageMatrix {
-	var M mat.Dense
-	r, c := M.Copy(m)
+	r,c:=m.Dims()
+	var M mat.Dense=*mat.NewDense(r,c,nil)
+	M.Copy(m)
 	hr := r / 2
 	hc := c / 2
 
@@ -289,23 +290,7 @@ func (m *ImageMatrix) Cofactor(p, q int) ImageMatrix {
 
 }
 
-func (m *ImageMatrix) Determinant() float64 {
-	n, _ := m.Dims()
-	if n == 1 {
-		return m.At(0, 0)
-	}
-	det := 0.0
 
-	cof := NewImageMatrix(mat.NewDense(n, n, nil))
-	sign := 1.0
-	for f := 0; f < n; f++ {
-		cof = m.Cofactor(0, f)
-		det += sign * m.At(0, f) * cof.Determinant()
-		sign = -sign
-	}
-
-	return det
-}
 
 func (matrix *ImageMatrix) Adjoint() ImageMatrix {
 	n, _ := matrix.Dims()
@@ -318,7 +303,7 @@ func (matrix *ImageMatrix) Adjoint() ImageMatrix {
 			if (i+j)%2 != 0 {
 				sign = -1.0
 			}
-			adj.Set(j, i, sign*cofactor.Determinant()) // Transpose and apply sign
+			adj.Set(j,i,sign*mat.Det(cofactor))
 		}
 	}
 	return adj
