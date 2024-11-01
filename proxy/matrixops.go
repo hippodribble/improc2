@@ -20,10 +20,20 @@ func NewImageMatrix(m *mat.Dense) ImageMatrix {
 func NewPSF(radius int, sigma float64) ImageMatrix {
 
 	psf := mat.NewDense(2*radius+1, 2*radius+1, nil)
+	sum := 0.0
 	for i := -radius; i <= radius; i++ {
 		for j := -radius; j <= radius; j++ {
 			a := math.Exp(-(math.Abs(float64(i)) + math.Abs(float64(j))) / 2 / sigma / sigma)
 			psf.Set(i+radius, j+radius, a)
+			sum += a
+		}
+	}
+	divisor := 2*radius + 1
+	divisor *= divisor
+
+	for i := -radius; i <= radius; i++ {
+		for j := -radius; j <= radius; j++ {
+			psf.Set(i+radius, j+radius, psf.At(i+radius, j+radius)/float64(divisor))
 		}
 	}
 	return NewImageMatrix(psf)
@@ -241,8 +251,8 @@ func (g ImageMatrix) CalcRatio(f ImageMatrix) (ImageMatrix, error) {
 }
 
 func (m ImageMatrix) Flip() ImageMatrix {
-	r,c:=m.Dims()
-	var M mat.Dense=*mat.NewDense(r,c,nil)
+	r, c := m.Dims()
+	var M mat.Dense = *mat.NewDense(r, c, nil)
 	M.Copy(m)
 	hr := r / 2
 	hc := c / 2
@@ -290,8 +300,6 @@ func (m *ImageMatrix) Cofactor(p, q int) ImageMatrix {
 
 }
 
-
-
 func (matrix *ImageMatrix) Adjoint() ImageMatrix {
 	n, _ := matrix.Dims()
 	adj := NewImageMatrix(mat.NewDense(n, n, nil))
@@ -303,7 +311,7 @@ func (matrix *ImageMatrix) Adjoint() ImageMatrix {
 			if (i+j)%2 != 0 {
 				sign = -1.0
 			}
-			adj.Set(j,i,sign*mat.Det(cofactor))
+			adj.Set(j, i, sign*mat.Det(cofactor))
 		}
 	}
 	return adj
