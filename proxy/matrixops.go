@@ -319,7 +319,7 @@ func (m *ImageMatrix) Adjoint() ImageMatrix {
 
 func (m *ImageMatrix) Pad(T, B, L, R int) *ImageMatrix {
 	r, c := m.Dims()
-	w := c + L + r
+	w := c + L + R
 	h := r + T + B
 	M := NewImageMatrix(mat.NewDense(h, w, nil))
 	for i := 0; i < r; i++ {
@@ -337,14 +337,14 @@ func (m *ImageMatrix) PadReflect(n int) *ImageMatrix {
 
 	for i := 0; i < n; i++ {
 
-		for col := 0; col < c; col++ {
-			M.Set(i, col+n, M.At(n*2-1-i, col))
-			M.Set(r+i, col+n, M.At(r-i-1, col))
+		for col := 0; col < c+2*n; col++ {
+			M.Set(i, col, M.At(n*2-1-i, col))
+			M.Set(r+i, col, M.At(r-i-1, col))
 		}
 
-		for row := 0; row < r; row++ {
-			M.Set(row+n, i, M.At(row, n*2-1-i))
-			M.Set(row+n, c+i, M.At(row, c-i-1))
+		for row := 0; row < r+2*n; row++ {
+			M.Set(row, i, M.At(row, n*2-1-i))
+			M.Set(row, c+i, M.At(row, c-i-1))
 		}
 
 	}
