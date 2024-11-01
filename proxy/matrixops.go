@@ -159,7 +159,6 @@ func RescaleMatrixTo256(matrix mat.Matrix) mat.Dense {
 		}
 	}
 
-
 	// log.Println("Rescale to 256", R, C, "vs", r, c)
 
 	return *m
@@ -267,4 +266,60 @@ func (m ImageMatrix) Flip() ImageMatrix {
 	}
 
 	return NewImageMatrix(&M)
+}
+
+func (m *ImageMatrix) Cofactor(p, q int) ImageMatrix {
+	n, _ := m.Dims()
+	cofactor := mat.NewDense(n-1, n-1, nil)
+
+	rowIndex, colIndex := 0, 0
+	for i := 0; i < n; i++ {
+		for j := 0; j < n; j++ {
+			if i != p && j != q {
+				cofactor.Set(rowIndex, colIndex, m.At(i, j))
+				colIndex++
+				if colIndex == n-1 {
+					colIndex = 0
+					rowIndex++
+				}
+			}
+		}
+	}
+	return NewImageMatrix(cofactor)
+
+}
+
+func (m *ImageMatrix) Determinant() float64 {
+	n, _ := m.Dims()
+	if n == 1 {
+		return m.At(0, 0)
+	}
+	det := 0.0
+
+	cof := NewImageMatrix(mat.NewDense(n, n, nil))
+	sign := 1.0
+	for f := 0; f < n; f++ {
+		cof = m.Cofactor(0, f)
+		det += sign * m.At(0, f) * cof.Determinant()
+		sign = -sign
+	}
+
+	return det
+}
+
+func (matrix *ImageMatrix) Adjoint() ImageMatrix {
+	n, _ := matrix.Dims()
+	adj := NewImageMatrix(mat.NewDense(n, n, nil))
+
+	for i := 0; i < n; i++ {
+		for j := 0; j < n; j++ {
+			cofactor := matrix.Cofactor(i, j)
+			sign := 1.0
+			if (i+j)%2 != 0 {
+				sign = -1.0
+			}
+			adj.Set(j, i, sign*cofactor.Determinant()) // Transpose and apply sign
+		}
+	}
+	return adj
 }
