@@ -22,7 +22,7 @@ func NewPSF(radius int, sigma float64) ImageMatrix {
 	psf := mat.NewDense(2*radius+1, 2*radius+1, nil)
 	for i := -radius; i <= radius; i++ {
 		for j := -radius; j <= radius; j++ {
-			a := math.Exp(-math.Abs(float64(i) + float64(j)) / 2 / sigma / sigma)
+			a := math.Exp(-(math.Abs(float64(i) + math.Abs(float64(j))) / 2 / sigma / sigma)
 			psf.Set(i+radius, j+radius, a)
 		}
 	}
