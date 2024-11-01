@@ -300,13 +300,13 @@ func (m *ImageMatrix) Cofactor(p, q int) ImageMatrix {
 
 }
 
-func (matrix *ImageMatrix) Adjoint() ImageMatrix {
-	n, _ := matrix.Dims()
+func (m *ImageMatrix) Adjoint() ImageMatrix {
+	n, _ := m.Dims()
 	adj := NewImageMatrix(mat.NewDense(n, n, nil))
 
 	for i := 0; i < n; i++ {
 		for j := 0; j < n; j++ {
-			cofactor := matrix.Cofactor(i, j)
+			cofactor := m.Cofactor(i, j)
 			sign := 1.0
 			if (i+j)%2 != 0 {
 				sign = -1.0
@@ -315,4 +315,39 @@ func (matrix *ImageMatrix) Adjoint() ImageMatrix {
 		}
 	}
 	return adj
+}
+
+func (m *ImageMatrix) Pad(T, B, L, R int) *ImageMatrix {
+	r, c := m.Dims()
+	w := c + L + r
+	h := r + T + B
+	M := NewImageMatrix(mat.NewDense(h, w, nil))
+	for i := 0; i < r; i++ {
+		for j := 0; j < c; j++ {
+			M.Set(i+T, j+L, m.At(i, j))
+		}
+	}
+	return &M
+}
+
+func (m *ImageMatrix) PadReflect(n int) *ImageMatrix {
+
+	r, c := m.Dims()
+	M := m.Pad(n, n, n, n)
+
+	for i := 0; i < n; i++ {
+
+		for col := 0; col < c; col++ {
+			M.Set(i, col, M.At(n*2-1-i, col))
+			M.Set(n+i, col, M.At(r-i-1, col))
+		}
+
+		for row := 0; row < r; row++ {
+			M.Set(row, i, M.At(row, n*2-1-i))
+			M.Set(row, n+i, M.At(row, c-i-1))
+		}
+
+	}
+
+	return M
 }
