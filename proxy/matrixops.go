@@ -318,16 +318,38 @@ func (m *ImageMatrix) Adjoint() ImageMatrix {
 }
 
 func (m *ImageMatrix) Pad(T, B, L, R int) *ImageMatrix {
-	r, c := m.Dims()
-	w := c + L + R
-	h := r + T + B
+	rows, cols := m.Dims()
+	h := rows + T + B
+	w := cols + L + R
 	M := NewImageMatrix(mat.NewDense(h, w, nil))
-	for i := 0; i < r; i++ {
-		for j := 0; j < c; j++ {
+	for i := 0; i < rows; i++ {
+		for j := 0; j < cols; j++ {
 			M.Set(i+T, j+L, m.At(i, j))
 		}
 	}
 	return &M
+}
+
+func (m *ImageMatrix) PadReflect(n int) *ImageMatrix {
+
+	rows, cols := m.Dims()
+	M := m.Pad(n, n, n, n)
+
+	for i := 0; i < n; i++ {
+
+		for col := 0; col < cols+2*n; col++ {
+			M.Set(i, col, M.At(n*2-1-i, col))
+			M.Set(rows+i, col, M.At(rows+n-i-1, col))
+		}
+
+		for row := 0; row < rows+2*n; row++ {
+			M.Set(row, i, M.At(row, n*2-1-i))
+			M.Set(row, cols+i, M.At(row, cols+n-i-1))
+		}
+
+	}
+
+	return M
 }
 
 func (m *ImageMatrix) Trim(T, B, L, R int) *ImageMatrix {
@@ -344,27 +366,5 @@ func (m *ImageMatrix) Trim(T, B, L, R int) *ImageMatrix {
 }
 
 func (m *ImageMatrix) TrimAll(n int) *ImageMatrix {
-	return m.Trim(n,n,n,n)
-}
-
-func (m *ImageMatrix) PadReflect(n int) *ImageMatrix {
-
-	r, c := m.Dims()
-	M := m.Pad(n, n, n, n)
-
-	for i := 0; i < n; i++ {
-
-		for col := 0; col < c+2*n; col++ {
-			M.Set(i, col, M.At(n*2-1-i, col))
-			M.Set(r+i, col, M.At(r-i-1, col))
-		}
-
-		for row := 0; row < r+2*n; row++ {
-			M.Set(row, i, M.At(row, n*2-1-i))
-			M.Set(row, c+i, M.At(row, c-i-1))
-		}
-
-	}
-
-	return M
+	return m.Trim(n, n, n, n)
 }
