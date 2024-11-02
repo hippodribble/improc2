@@ -161,7 +161,7 @@ func RescaleMatrixTo256(matrix mat.Matrix) mat.Dense {
 			}
 		}
 	}
-log.Printf("For picture, data range is %.1f - %.1f\n",vmin,vmax)
+log.Printf("For picture, data range is %.1g - %.1g\n",vmin,vmax)
 	vrange := vmax - vmin
 	for i := 0; i < r; i++ {
 		for j := 0; j < c; j++ {
