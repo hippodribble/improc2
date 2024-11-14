@@ -368,3 +368,28 @@ func (m *ImageMatrix) Trim(T, B, L, R int) *ImageMatrix {
 func (m *ImageMatrix) TrimAll(n int) *ImageMatrix {
 	return m.Trim(n, n, n, n)
 }
+
+func (m *ImageMatrix) BilateralFilter(sigmaD, sigmaR float64, opradius int) *ImageMatrix {
+
+	r, c := m.Dims()
+	M := NewImageMatrix(mat.NewDense(r, c, nil))
+
+	for i := 0; i < r; i++ {
+		for j := 0; j < c; j++ {
+			var sum, divisor float64
+			for x := -opradius; x < opradius+1; x++ {
+				for y := -opradius; y < opradius+1; y++ {
+					if i+x >= 0 && i+x < r && j+y >= 0 && j+y < c {
+						gaussian := math.Exp(-(float64(x*x+y*y) / (2 * sigmaD * sigmaD)))
+						rangeWeight := math.Exp(-((m.At(i, j) - m.At(i+x, j+y)) * (m.At(i, j) - m.At(i+x, j+y))) / (2 * sigmaR * sigmaR))
+						weight := gaussian * rangeWeight
+						sum += weight * m.At(i+x, j+y)
+						divisor += weight
+					}
+				}
+			}
+			M.Set(i, j, sum/divisor)
+		}
+	}
+	return &M
+}

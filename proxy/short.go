@@ -84,9 +84,9 @@ func Short8As16(in []uint8)[]uint16{
 	for i:=0;i<len(in)/2;i++{
 		out[i]=uint16(in[2*i])*256+uint16(in[2*i+1])
 	}
+	
 	return out
 }
-
 
 func equaliser[k Ushort](Y []k) *[]k {
 

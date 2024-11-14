@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"image"
-	"image/color"
 	"log"
 	"os"
 	"time"
@@ -21,9 +20,8 @@ import (
 
 var stack *fyne.Container
 var win fyne.Window
-var status *widget.Label
-var levelslider *widget.Slider
-var ci *canvas.Image
+
+
 var infochan chan interface{}
 
 // var zc ZoomCanvas
@@ -40,16 +38,14 @@ func main() {
 func simpleGUI() fyne.Window {
 	app := app.NewWithID("com.github.hippodribble.improc2")
 	w := app.NewWindow("Image Fusion")
-	stack = container.NewStack(widget.NewLabel("Welcome"))
+	// stack = container.NewStack(widget.NewLabel("Welcome"))
+	stack = container.NewGridWithColumns(1, widget.NewLabel("Welcome"))
+	
 	top := container.NewHBox()
-	levelslider = widget.NewSlider(0, 0)
-	levelslider.Step = 1
-	levelslider.OnChanged = setimageindex
-	r := canvas.NewRectangle(color.Transparent)
-	r.SetMinSize(fyne.NewSize(300, 5))
-	a := container.NewStack(r, levelslider)
-	top.Add(a)
-	top.Add(widget.NewSeparator())
+
+	// r := canvas.NewRectangle(color.Transparent)
+	// r.SetMinSize(fyne.NewSize(300, 5))
+
 	top.Add(widget.NewButton("Single", makeSingle))
 	top.Add(widget.NewButton("Info", func() {
 		go func() {
@@ -64,31 +60,12 @@ func simpleGUI() fyne.Window {
 
 	infochan = make(chan interface{})
 	bottom := fynewidgets.NewStatusProgress(infochan)
-
 	w.SetContent(container.NewBorder(top, bottom, nil, nil, stack))
 	return w
 }
 
-func setimageindex(f float64) {
-	if pyramid == nil {
-		return
-	}
-	if ci == nil {
-		return
-	}
-	i := int(f)
-	if i < len(pyramid) {
-		status.SetText(fmt.Sprintf("zoom level %v selected", i))
-		ci.Image = pyramid[i]
-		ci.Refresh()
-
-		// zc.Image.Image = pyramid[i]
-		// zc.Refresh()
-	}
-}
-
 func makeSingle() {
-	name := "proxy/testdata/backup/200123_Maximum resolution.jpg"
+	name := "/Users/glenn/Dropbox/golang/imagewidgets/moon.png"
 
 	f, err := os.Open(name)
 
@@ -102,15 +79,33 @@ func makeSingle() {
 		log.Println("could not decode image " + err.Error())
 	}
 
-	// ww, err := NewImageWidget(ip, 100)
 	ww, err := fynewidgets.NewPanZoomCanvasFromImage(ip, image.Pt(100, 100), infochan, name)
 	if err != nil {
 		log.Println("cannot make pyramid from images")
 		return
 	}
+
 	infochan <- fmt.Sprintf("File %s (level %d)", name, ww.Datum().Pyramid.Level())
 	stack.RemoveAll()
 	stack.Add(ww)
+	stack.Refresh()
+
+	improx:=&proxy.ImageProxy{Image: ip}
+	pf:=improx.LuminanceAsFloat()
+	log.Println("luminance")
+
+	filtered:=pf.BilateralFilter(2,2,2)
+	prox2:=&proxy.ImageProxy{}
+	prox2.LoadFromFloats(filtered,8,true)
+	w2,_:=fynewidgets.NewPanZoomCanvasFromImage(prox2.Image, image.Pt(100, 100), infochan, name+" bilateral")
+	stack.Add(w2)
+	stack.Refresh()
+
+	filtered2:=pf.BilateralFilter(5,5,5)
+	prox3:=&proxy.ImageProxy{}
+	prox3.LoadFromFloats(filtered2,8,true)
+	w3,_:=fynewidgets.NewPanZoomCanvasFromImage(prox3.Image, image.Pt(100, 100), infochan, name+" bilateral 2")
+	stack.Add(w3)
 	stack.Refresh()
 }
 
