@@ -6,7 +6,9 @@ import (
 	"log"
 	"math"
 	"math/cmplx"
+	"runtime"
 	"sort"
+	"sync"
 
 	"github.com/mjibson/go-dsp/fft"
 )
@@ -808,24 +810,33 @@ func (f Float2D) BilateralFilter(sd, sr float64, opradius int) Float2D {
 		out[i] = make([]float64, W)
 	}
 	// iterate over all pixels
+	poolsize := runtime.NumCPU()
+	poolchan := make(chan int, poolsize)
+	wg := &sync.WaitGroup{}
 	for j := opradius; j < H-opradius-1; j++ {
-		// if j%100==0
-		for i := opradius; i < W-opradius-1; i++ {
-			// var sum float64
-			var divisor float64
-			// iterate over the operators
-			for k := -opradius; k < opradius+1; k++ {
-				for l := -opradius; l < opradius+1; l++ {
-					// calculate the weight for this pixel
-					gaussian := math.Exp(-(float64(k*k+l*l) / (2 * sd * sd)))
-					rangeWeight := math.Exp(-((f[j][i] - f[j+k][i+l]) * (f[j][i] - f[j+k][i+l])) / (2 * sr * sr))
-					weight := gaussian * rangeWeight
-					out[j][i] += f[j+k][i+l] * weight
-					divisor += weight
+		go func(row int, wg *sync.WaitGroup) {
+			poolchan<-1
+			wg.Add(1)
+			defer wg.Done()
+			for i := opradius; i < W-opradius-1; i++ {
+				// var sum float64
+				var divisor float64
+				// iterate over the operators
+				for k := -opradius; k < opradius+1; k++ {
+					for l := -opradius; l < opradius+1; l++ {
+						// calculate the weight for this pixel
+						gaussian := math.Exp(-(float64(k*k+l*l) / (2 * sd * sd)))
+						rangeWeight := math.Exp(-((f[j][i] - f[j+k][i+l]) * (f[j][i] - f[j+k][i+l])) / (2 * sr * sr))
+						weight := gaussian * rangeWeight
+						out[j][i] += f[j+k][i+l] * weight
+						divisor += weight
+					}
 				}
+				out[j][i] /= divisor
 			}
-			out[j][i] /= divisor
-		}
+		}(j, wg)
+		// if j%100==0
+
 	}
 	return out
 }
