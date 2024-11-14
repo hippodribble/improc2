@@ -60,7 +60,7 @@ func simpleGUI() fyne.Window {
 
 	infochan = make(chan interface{})
 	bottom := fynewidgets.NewStatusProgress(infochan)
-	w.SetContent(container.NewBorder(top, bottom, nil, nil, stack))
+	w.SetContent(container.NewBorder(top, bottom, nil, nil, container.NewVScroll(stack)))
 	return w
 }
 
@@ -101,12 +101,12 @@ func makeSingle() {
 	stack.Add(w2)
 	stack.Refresh()
 
-	filtered2:=pf.BilateralFilter(5,5,5)
-	prox3:=&proxy.ImageProxy{}
-	prox3.LoadFromFloats(filtered2,8,true)
-	w3,_:=fynewidgets.NewPanZoomCanvasFromImage(prox3.Image, image.Pt(100, 100), infochan, name+" bilateral 2")
-	stack.Add(w3)
-	stack.Refresh()
+	// filtered2:=pf.BilateralFilter(5,5,5)
+	// prox3:=&proxy.ImageProxy{}
+	// prox3.LoadFromFloats(filtered2,8,true)
+	// w3,_:=fynewidgets.NewPanZoomCanvasFromImage(prox3.Image, image.Pt(100, 100), infochan, name+" bilateral 2")
+	// stack.Add(w3)
+	// stack.Refresh()
 }
 
 type ImageWidget struct {
