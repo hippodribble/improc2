@@ -838,5 +838,6 @@ func (f Float2D) BilateralFilter(sd, sr float64, opradius int) Float2D {
 		// if j%100==0
 
 	}
+	wg.Wait()
 	return out
 }
