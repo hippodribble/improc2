@@ -21,11 +21,10 @@ import (
 var stack *fyne.Container
 var win fyne.Window
 
-
 var infochan chan interface{}
 
 // var zc ZoomCanvas
-var pyramid []*proxy.ImageProxy
+// var pyramid []*proxy.ImageProxy
 
 func main() {
 	log.Println("Application start")
@@ -39,12 +38,10 @@ func simpleGUI() fyne.Window {
 	app := app.NewWithID("com.github.hippodribble.improc2")
 	w := app.NewWindow("Image Fusion")
 	// stack = container.NewStack(widget.NewLabel("Welcome"))
-	stack = container.NewGridWithColumns(1, widget.NewLabel("Welcome"))
-	
+	stack = container.NewGridWithColumns(2, widget.NewLabel("Welcome"))
+
 	top := container.NewHBox()
 
-	// r := canvas.NewRectangle(color.Transparent)
-	// r.SetMinSize(fyne.NewSize(300, 5))
 
 	top.Add(widget.NewButton("Single", makeSingle))
 	top.Add(widget.NewButton("Info", func() {
@@ -59,7 +56,20 @@ func simpleGUI() fyne.Window {
 	}))
 
 	infochan = make(chan interface{})
-	bottom := fynewidgets.NewStatusProgress(infochan)
+	status := widget.NewLabel("ready...")
+	progress := widget.NewProgressBar()
+	go func() {
+		for update := range infochan {
+			log.Println(update)
+			switch x := update.(type) {
+			case string:
+				status.SetText(x)
+			case float64:
+				progress.SetValue(x)
+			}
+		}
+	}()
+		bottom:=container.NewBorder(nil,nil,nil,progress,status)
 	w.SetContent(container.NewBorder(top, bottom, nil, nil, container.NewVScroll(stack)))
 	return w
 }
@@ -79,25 +89,27 @@ func makeSingle() {
 		log.Println("could not decode image " + err.Error())
 	}
 
-	ww, err := fynewidgets.NewPanZoomCanvasFromImage(ip, image.Pt(100, 100), infochan, name)
+	PZ, err := fynewidgets.NewPanZoomCanvasFromImage(ip, image.Pt(100, 100), infochan, name)
 	if err != nil {
 		log.Println("cannot make pyramid from images")
 		return
 	}
 
-	infochan <- fmt.Sprintf("File %s (level %d)", name, ww.Datum().Pyramid.Level())
+	infochan <- fmt.Sprintf("File %s (level %d)", name, PZ.Datum().Pyramid.Level())
+	// fmt.Printf("File %s (level %d)\n", name, PZ.Datum().Pyramid.Level())
 	stack.RemoveAll()
-	stack.Add(ww)
+	stack.Add(PZ)
 	stack.Refresh()
 
-	improx:=&proxy.ImageProxy{Image: ip}
-	pf:=improx.LuminanceAsFloat()
+	improx := &proxy.ImageProxy{Image: ip}
+	pf := improx.LuminanceAsFloat()
 	log.Println("luminance")
 
-	filtered:=pf.BilateralFilter(2,2,2)
-	prox2:=&proxy.ImageProxy{}
-	prox2.LoadFromFloats(filtered,8,true)
-	w2,_:=fynewidgets.NewPanZoomCanvasFromImage(prox2.Image, image.Pt(100, 100), infochan, name+" bilateral")
+	filtered := pf.BilateralFilter(2, 2, 11)
+	prox2 := &proxy.ImageProxy{}
+	prox2.LoadFromFloats(filtered, 8, true)
+	w2, _ := fynewidgets.NewPanZoomCanvasFromImage(prox2.Image, image.Pt(100, 100), infochan, name+" bilateral")
+	// fmt.Printf("Bilateral filter File %s (level %d)", name, w2.Datum().Pyramid.Level())
 	stack.Add(w2)
 	stack.Refresh()
 
